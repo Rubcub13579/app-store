@@ -1,6 +1,6 @@
 import { Text, View } from "react-native";
 
-export default function Index() {
+export default function Favorite() {
   return (
     <View
       style={{
@@ -9,8 +9,7 @@ export default function Index() {
         alignItems: "center",
       }}
     >
-      <Text>Top Free Apps</Text>
-      <Text>Top Paid Apps</Text>
+      <Text>Favorites</Text>
     </View>
   );
 }
