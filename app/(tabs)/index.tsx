@@ -1,6 +1,7 @@
 import AppCard from "@/components/app-card";
 import { AppModel } from "@/models/app-model";
-import { storeService } from "@/services/store-service";
+import { appService } from "@/services/apps-service";
+import { storageService } from "@/services/storage-service";
 import { useEffect, useState } from "react";
 import { FlatList, StyleSheet, Text, View } from "react-native";
 
@@ -11,15 +12,28 @@ export default function Index() {
   useEffect(() => {
     const fetchFreeApps = async () => {
       try {
-        const apps = await storeService.getTop10FreeApps();
+        const apps = await storageService.loadFreeApps();
+        if (apps.length === 0) {
+          const apps = await appService.getTop10FreeApps();
+          await storageService.saveFreeApps(apps);
+          setFreeApps(apps);
+          return;
+        }
         setFreeApps(apps);
       } catch (err) {
         console.log(err);
       }
     };
+
     const fetchPaidApps = async () => {
       try {
-        const apps = await storeService.getTop25PaidApps();
+        const apps = await storageService.loadPaidApps();
+        if (apps.length === 0) {
+          const apps = await appService.getTop25PaidApps();
+          await storageService.savePaidApps(apps);
+          setPaidApps(apps);
+          return;
+        }
         setPaidApps(apps);
       } catch (err) {
         console.log(err);
@@ -31,9 +45,7 @@ export default function Index() {
   }, []);
 
   return (
-    <View
-      style={styles.view}
-    >
+    <View style={styles.view}>
       <Text style={styles.text}>Top Free Apps</Text>
       <FlatList
         data={freeApps}
@@ -55,11 +67,12 @@ const styles = StyleSheet.create({
   text: {
     alignSelf: "flex-start",
     fontWeight: "bold",
-    color: "#fff"
+    color: "#fff",
+    marginVertical: 5
   },
   view: {
     backgroundColor: "#222121",
     flex: 1,
-    justifyContent: "center",
-  }
-})
+    margin: "auto"
+  },
+});

@@ -1,19 +1,48 @@
 import { AppModel } from "@/models/app-model";
-import { Image, Linking, Pressable, StyleSheet, Text, View, } from "react-native";
+import { storageService } from "@/services/storage-service";
+import { useEffect, useState } from "react";
+import {
+  Image,
+  Linking,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
 type Props = {
   app: AppModel;
+  onFavoriteChanged?: () => void; // optional: lets Favorites screen refresh
 };
 
-export default function AppCard({ app }: Props) {
+export default function AppCard({ app, onFavoriteChanged }: Props) {
+  const [isFavorite, setIsFavorite] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const fav = await storageService.isFavorite(app.id);
+      if (alive) setIsFavorite(fav);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [app.id]);
+
   const openApp = async () => {
-    // (optional) validate URL first
     if (app.url) await Linking.openURL(app.url);
+  };
+
+  const toggleFavorite = async () => {
+    const result = await storageService.toggleFavoriteApp(app);
+    setIsFavorite(result.isFavorite);
+    onFavoriteChanged?.();
   };
 
   return (
     <Pressable onPress={openApp} style={styles.card}>
       <Image source={{ uri: app.artworkUrl100 }} style={styles.image} />
+
       <View style={styles.info}>
         <Text style={styles.name} numberOfLines={1}>
           {app.name}
@@ -25,6 +54,20 @@ export default function AppCard({ app }: Props) {
           {app.kind} • {app.releaseDate}
         </Text>
       </View>
+
+      {/* Heart button (separate press target) */}
+      <Pressable
+        onPress={(e) => {
+          e.stopPropagation(); // prevents triggering openApp
+          toggleFavorite();
+        }}
+        hitSlop={10}
+        style={styles.heartBtn}
+      >
+        <Text style={[styles.heart, isFavorite && styles.heartActive]}>
+          {isFavorite ? "❤" : "🤍"}
+        </Text>
+      </Pressable>
     </Pressable>
   );
 }
@@ -39,12 +82,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 10,
     marginRight: 10,
-
-    // shadow (iOS)
     shadowOpacity: 0.1,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
-    // elevation (Android)
     elevation: 2,
   },
   image: {
@@ -68,5 +108,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     opacity: 0.55,
     marginTop: 4,
+  },
+
+  heartBtn: {
+    paddingLeft: 6,
+    paddingVertical: 6,
+  },
+  heart: {
+    fontSize: 22,
+    opacity: 0.5,
+  },
+  heartActive: {
+    opacity: 1,
   },
 });

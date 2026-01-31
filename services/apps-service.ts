@@ -1,7 +1,7 @@
 import { AppModel } from "@/models/app-model";
 import axios from "axios";
 
-class StoreService {
+class AppsService {
   public async getTop10FreeApps(): Promise<AppModel[]> {
     const response = await axios.get(
       "https://rss.marketingtools.apple.com/api/v2/us/apps/top-free/10/apps.json",
@@ -21,4 +21,4 @@ class StoreService {
   }
 }
 
-export const storeService = new StoreService();
+export const appService = new AppsService();
